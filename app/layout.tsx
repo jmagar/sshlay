@@ -1,20 +1,20 @@
-import React from 'react';
-import { AppProps } from 'next/app';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import Layout from '@/components/layout';
+'use client'
 
-const theme = createTheme({
-  // You can customize your theme here
-});
+import * as React from 'react';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 
-export default function RootLayout({ Component, pageProps }: AppProps) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Layout>
-        <Component {...pageProps} />
-      </Layout>
-    </ThemeProvider>
+    <html lang="en">
+      <body>
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
+      </body>
+    </html>
   );
 }

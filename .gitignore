@@ -23,11 +23,15 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
 .env*.local
 
-# vercel
-.vercel
+# mongodb
+mongodb_data/
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# IDE
+.idea/
+.vscode/
+
+# logs
+*.log

@@ -1,76 +1,50 @@
 # SSHLay
 
-SSHLay is a modern web-based SSH and Docker management system built with Next.js 13. It provides a user-friendly interface for managing SSH connections, executing remote commands, managing Docker containers, and exploring remote file systems.
+A remote server management system with SSH, Docker, and file management capabilities.
 
-## Features
+## MongoDB Setup
 
-- 🔐 SSH Connection Management
-- 🐳 Docker Container Management
-- 📁 Remote File Explorer
-- 💻 Interactive Terminal
-- 🚀 Remote Code Execution
-- 📊 Real-time Logs
-- 🔄 File Upload/Download
-- 🔑 SSH Key Authentication Support
+The project uses MongoDB running in Docker. To manage the MongoDB container:
 
-## Tech Stack
-
-- Next.js 13 (App Router)
-- TypeScript
-- MongoDB
-- TailwindCSS
-- shadcn/ui Components
-- SSH2
-- Dockerode
-- Socket.IO
-
-## Getting Started
-
-1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/sshlay.git
-cd sshlay
+# Start MongoDB
+./scripts/mongo.sh start
+
+# Stop MongoDB
+./scripts/mongo.sh stop
+
+# Restart MongoDB
+./scripts/mongo.sh restart
+
+# View MongoDB logs
+./scripts/mongo.sh logs
 ```
 
-2. Install dependencies:
+### MongoDB Connection Details
+
+- Database Name: sshlay
+- Username: sshlay
+- Password: sshlay_password
+- Connection URI: mongodb://sshlay:sshlay_password@localhost:27017/sshlay
+
+## Development
+
+1. Start MongoDB:
+```bash
+./scripts/mongo.sh start
+```
+
+2. Start the backend server:
+```bash
+cd server
+npm install
+node server.js
+```
+
+3. Start the frontend:
 ```bash
 npm install
-```
-
-3. Create a `.env.local` file:
-```bash
-MONGODB_URI=your_mongodb_uri
-```
-
-4. Run the development server:
-```bash
 npm run dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) with your browser.
-
-## Project Structure
-
-```
-sshlay/
-├── app/                    # Next.js 13 app directory
-│   ├── api/               # API routes
-│   ├── connections/       # SSH connections page
-│   ├── docker/           # Docker management page
-│   ├── file-explorer/    # File explorer page
-│   ├── logs/            # Logs page
-│   ├── remote-execution/ # Remote code execution page
-│   └── terminal/        # Terminal page
-├── components/           # React components
-│   ├── ui/              # UI components
-│   └── ...              # Feature components
-└── lib/                 # Utility functions and configurations
-```
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-[MIT](LICENSE)
+The application will be available at http://localhost:3000

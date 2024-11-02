@@ -1,20 +1,16 @@
 import React from 'react';
-import { AppProps } from 'next/app';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import Layout from '@/components/layout';
+import { Card } from "@/components/ui/card";
 
-const theme = createTheme({
-  // You can customize your theme here
-});
+interface FileExplorerProps {
+  children?: React.ReactNode;
+}
 
-export default function RootLayout({ Component, pageProps }: AppProps) {
+export default function FileExplorer({ children }: FileExplorerProps) {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Layout>
-        <Component {...pageProps} />
-      </Layout>
-    </ThemeProvider>
+    <Card>
+      <div className="p-6">
+        {children}
+      </div>
+    </Card>
   );
 }
