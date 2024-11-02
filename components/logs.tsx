@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Paper,
+  Card,
+  CardContent,
   Typography,
   TextField,
   Button,
@@ -9,7 +10,7 @@ import {
   ListItemText,
   CircularProgress
 } from '@mui/material';
-import { Search } from '@mui/icons-material';
+import { Search as SearchIcon } from '@mui/icons-material';
 
 interface LogEntry {
   timestamp: string;
@@ -43,7 +44,6 @@ export default function Logs() {
 
   const handleSearch = () => {
     // Implement log search functionality
-    console.log('Searching for:', searchTerm);
   };
 
   if (isLoading) {
@@ -55,37 +55,39 @@ export default function Logs() {
   }
 
   return (
-    <Paper elevation={3} sx={{ p: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        System Logs
-      </Typography>
-      <div style={{ display: 'flex', marginBottom: '1rem' }}>
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="Search logs..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <Button
-          variant="contained"
-          startIcon={<Search />}
-          onClick={handleSearch}
-          sx={{ ml: 1 }}
-        >
-          Search
-        </Button>
-      </div>
-      <List>
-        {logs.map((log, index) => (
-          <ListItem key={index} divider>
-            <ListItemText
-              primary={log.message}
-              secondary={`${log.timestamp} - ${log.level}`}
-            />
-          </ListItem>
-        ))}
-      </List>
-    </Paper>
+    <Card>
+      <CardContent>
+        <Typography variant="h5" component="div" gutterBottom>
+          System Logs
+        </Typography>
+        <div style={{ display: 'flex', marginBottom: '1rem' }}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Search logs..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <Button
+            variant="contained"
+            startIcon={<SearchIcon />}
+            onClick={handleSearch}
+            sx={{ ml: 1 }}
+          >
+            Search
+          </Button>
+        </div>
+        <List>
+          {logs.map((log, index) => (
+            <ListItem key={index} divider>
+              <ListItemText
+                primary={log.message}
+                secondary={`${log.timestamp} - ${log.level}`}
+              />
+            </ListItem>
+          ))}
+        </List>
+      </CardContent>
+    </Card>
   );
 }
