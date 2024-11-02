@@ -1,162 +1,174 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { AlertCircle, Play, Square, RefreshCw, Trash } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-
-interface SSHConnection {
-  id: string
-  name: string
-}
+import React, { useState, useEffect } from 'react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  Typography,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField
+} from '@mui/material';
+import { PlayArrow, Stop, Delete, Add } from '@mui/icons-material';
 
 interface DockerContainer {
-  id: string
-  name: string
-  status: string
-  image: string
+  id: string;
+  name: string;
+  image: string;
+  status: string;
+  ports: string;
 }
 
 export default function DockerManagement() {
-  const [connections, setConnections] = useState<SSHConnection[]>([])
-  const [selectedConnection, setSelectedConnection] = useState<string | null>(null)
-  const [containers, setContainers] = useState<DockerContainer[]>([])
-  const [error, setError] = useState<string | null>(null)
+  const [containers, setContainers] = useState<DockerContainer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [newContainer, setNewContainer] = useState({ image: '', name: '' });
 
   useEffect(() => {
-    fetchConnections()
-  }, [])
-
-  useEffect(() => {
-    if (selectedConnection) {
-      fetchContainers()
-    }
-  }, [selectedConnection])
-
-  const fetchConnections = async () => {
-    try {
-      const response = await fetch("/api/ssh-connections")
-      if (!response.ok) throw new Error("Failed to fetch SSH connections")
-      const data = await response.json()
-      setConnections(data)
-    } catch (err) {
-      setError("Failed to fetch SSH connections")
-    }
-  }
+    fetchContainers();
+  }, []);
 
   const fetchContainers = async () => {
+    setIsLoading(true);
     try {
-      const response = await fetch(`/api/docker/containers?connectionId=${selectedConnection}`)
-      if (!response.ok) throw new Error("Failed to fetch Docker containers")
-      const data = await response.json()
-      setContainers(data)
+      const response = await fetch('/api/docker/containers');
+      if (!response.ok) throw new Error('Failed to fetch containers');
+      const data = await response.json();
+      setContainers(data);
     } catch (err) {
-      setError("Failed to fetch Docker containers")
+      setError('Failed to fetch containers');
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const handleContainerAction = async (id: string, action: 'start' | 'stop' | 'remove') => {
+    try {
+      const response = await fetch(`/api/docker/containers/${id}/${action}`, { method: 'POST' });
+      if (!response.ok) throw new Error(`Failed to ${action} container`);
+      fetchContainers();
+    } catch (err) {
+      setError(`Failed to ${action} container`);
+    }
+  };
+
+  const handleCreateContainer = async () => {
+    try {
+      const response = await fetch('/api/docker/containers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newContainer),
+      });
+      if (!response.ok) throw new Error('Failed to create container');
+      fetchContainers();
+      setOpenDialog(false);
+      setNewContainer({ image: '', name: '' });
+    } catch (err) {
+      setError('Failed to create container');
+    }
+  };
+
+  if (isLoading) {
+    return <CircularProgress />;
   }
 
-  const handleContainerAction = async (action: string, containerId: string) => {
-    try {
-      const response = await fetch("/api/docker/containers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action,
-          containerId,
-          connectionId: selectedConnection,
-        }),
-      })
-      if (!response.ok) throw new Error(`Failed to ${action} container`)
-      fetchContainers()
-    } catch (err) {
-      setError(`Failed to ${action} container`)
-    }
+  if (error) {
+    return <Typography color="error">{error}</Typography>;
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Docker Management</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Select onValueChange={setSelectedConnection}>
-          <SelectTrigger className="w-[200px] mb-4">
-            <SelectValue placeholder="Select a connection" />
-          </SelectTrigger>
-          <SelectContent>
-            {connections.map((conn) => (
-              <SelectItem key={conn.id} value={conn.id}>
-                {conn.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
+    <Paper elevation={3} sx={{ p: 2 }}>
+      <Typography variant="h6" gutterBottom>
+        Docker Containers
+      </Typography>
+      <Button
+        variant="contained"
+        startIcon={<Add />}
+        onClick={() => setOpenDialog(true)}
+        sx={{ mb: 2 }}
+      >
+        Create Container
+      </Button>
+      <TableContainer component={Paper}>
         <Table>
-          <TableHeader>
+          <TableHead>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Image</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableCell>Name</TableCell>
+              <TableCell>Image</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Ports</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
-          </TableHeader>
+          </TableHead>
           <TableBody>
             {containers.map((container) => (
               <TableRow key={container.id}>
                 <TableCell>{container.name}</TableCell>
-                <TableCell>{container.status}</TableCell>
                 <TableCell>{container.image}</TableCell>
+                <TableCell>{container.status}</TableCell>
+                <TableCell>{container.ports}</TableCell>
                 <TableCell>
                   <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleContainerAction("start", container.id)}
-                    disabled={container.status === "running"}
+                    startIcon={<PlayArrow />}
+                    onClick={() => handleContainerAction(container.id, 'start')}
+
+                    disabled={container.status === 'running'}
                   >
-                    <Play className="h-4 w-4" />
+                    Start
                   </Button>
                   <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleContainerAction("stop", container.id)}
-                    disabled={container.status !== "running"}
+                    startIcon={<Stop />}
+                    onClick={() => handleContainerAction(container.id, 'stop')}
+                    disabled={container.status !== 'running'}
                   >
-                    <Square className="h-4 w-4" />
+                    Stop
                   </Button>
                   <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleContainerAction("restart", container.id)}
+                    startIcon={<Delete />}
+                    onClick={() => handleContainerAction(container.id, 'remove')}
                   >
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleContainerAction("remove", container.id)}
-                  >
-                    <Trash className="h-4 w-4" />
+                    Remove
                   </Button>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      </CardContent>
-    </Card>
-  )
+      </TableContainer>
+
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+        <DialogTitle>Create New Container</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Image"
+            fullWidth
+            value={newContainer.image}
+            onChange={(e) => setNewContainer({ ...newContainer, image: e.target.value })}
+          />
+          <TextField
+            margin="dense"
+            label="Name"
+            fullWidth
+            value={newContainer.name}
+            onChange={(e) => setNewContainer({ ...newContainer, name: e.target.value })}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+          <Button onClick={handleCreateContainer}>Create</Button>
+        </DialogActions>
+      </Dialog>
+    </Paper>
+  );
 }
