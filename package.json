@@ -1,11 +1,14 @@
 {
   "name": "sshlay",
   "version": "1.0.0",
+  "type": "commonjs",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "server": "node server/server.js"
+    "server": "node server/server.js",
+    "start:dev": "chmod +x scripts/dev.sh && ./scripts/dev.sh",
+    "stop": "docker compose down && sudo pkill -9 node"
   },
   "dependencies": {
     "@emotion/react": "^11.10.6",

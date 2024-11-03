@@ -1,107 +1,118 @@
-# SSHLay
+# SSHlay
 
-A remote server management system with SSH, Docker, and file management capabilities.
+A web-based SSH client and remote execution platform with Docker integration.
+
+## Features
+
+- SSH connection management
+- Remote code execution
+- Docker container management
+- File explorer
+- Real-time terminal
+- System logs viewer
 
 ## Prerequisites
 
-- Node.js (v16 or later)
+- Node.js v20+
 - Docker and Docker Compose
-- Git
+- MongoDB
+- Redis
+- netcat-openbsd (for development)
 
-## Quick Start
+## Development Setup
 
-1. Clone the repository:
+1. Install system dependencies:
 ```bash
-git clone https://github.com/jmagar/sshlay.git
-cd sshlay
+sudo apt-get update
+sudo apt-get install -y netcat-openbsd
 ```
 
-2. Run the setup script:
+2. Install project dependencies:
 ```bash
-./scripts/setup.sh
-```
-
-3. Start the backend server (in one terminal):
-```bash
-npm run server
-```
-
-4. Start the frontend development server (in another terminal):
-```bash
-npm run dev
-```
-
-5. Visit http://localhost:3000 in your browser
-
-## Manual Setup
-
-If you prefer to set up manually:
-
-1. Install dependencies:
-```bash
-# Frontend dependencies
 npm install
-
-# Backend dependencies
-cd server && npm install
-cd ..
+cd server && npm install && cd ..
 ```
 
-2. Start MongoDB:
+3. Start development environment:
 ```bash
-./scripts/mongo.sh start
+npm run start:dev
 ```
 
-3. Create .env file with:
+This will:
+- Start MongoDB and Redis containers
+- Launch the backend server
+- Start the Next.js development server
+- Monitor all services for crashes
+
+To stop all services:
+```bash
+npm run stop
 ```
-MONGODB_URI=mongodb://sshlay:sshlay_password@localhost:27017/sshlay
+
+## Project Structure
+
+- `/app` - Next.js pages and API routes
+- `/components` - React components
+- `/contexts` - React context providers
+- `/lib` - Shared utilities
+- `/scripts` - Development and utility scripts
+- `/server` - Backend Express server
+  - `/lib` - Server utilities
+  - `/middleware` - Express middleware
+  - `/routes` - API routes
+- `/styles` - Global styles
+- `/types` - TypeScript type definitions
+- `/utils` - Frontend utilities
+
+## Environment Variables
+
+Create a `.env.local` file:
+
+```env
+MONGODB_URI=mongodb://sshlay:sshlay_password@localhost:27017/sshlay?authSource=admin
 JWT_SECRET=your_secure_jwt_secret_here
 PORT=3001
 FRONTEND_URL=http://localhost:3000
 ```
 
-4. Start the servers:
-```bash
-# Terminal 1 - Backend
-npm run server
+## Available Scripts
 
-# Terminal 2 - Frontend
-npm run dev
-```
+- `npm run dev` - Start Next.js development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run start:dev` - Start full development environment
+- `npm run stop` - Stop all services
 
-## MongoDB Management
+## Error Handling
 
-The project uses MongoDB running in Docker. To manage the MongoDB container:
+The application includes comprehensive error handling:
+- Structured error logging to console and file
+- Error boundary for React components
+- API error handling with proper status codes
+- Graceful shutdown handling
 
-```bash
-# Start MongoDB
-./scripts/mongo.sh start
+## Database Structure
 
-# Stop MongoDB
-./scripts/mongo.sh stop
+### MongoDB Collections
 
-# Restart MongoDB
-./scripts/mongo.sh restart
+- `ssh_connections` - Stores SSH connection details
+- `execution_history` - Stores remote code execution history
 
-# View MongoDB logs
-./scripts/mongo.sh logs
-```
+### Redis
 
-## Development
+Used for:
+- Real-time updates
+- Caching
+- Pub/sub for logs and terminal output
 
-The project is structured as follows:
+## Contributing
 
-- `/app` - Next.js frontend pages and API routes
-- `/components` - React components
-- `/contexts` - React context providers
-- `/lib` - Utility functions and shared code
-- `/server` - Express.js backend
-  - `/routes` - API route handlers
-  - `/middleware` - Express middleware
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## Environment Variables
+## License
 
-- `MONGODB_URI` - MongoDB connection string
-- `JWT_SECRET` - Secret for JWT token generation
-- `PORT` - Backend server port (default: 3001)
-- `FRONTEND_URL` - Frontend URL for CORS (default: http://localhost:3000)
+This project is licensed under the MIT License - see the LICENSE file for details.

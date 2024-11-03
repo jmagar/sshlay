@@ -62,13 +62,15 @@ async function closeDatabase() {
       await client.close();
       console.log('MongoDB connection closed');
     }
-    if (redis) {
+
+    // Only try to quit Redis if it's connected
+    if (redis && redis.status === 'ready') {
       await redis.quit();
       console.log('Redis connection closed');
     }
   } catch (error) {
     console.error('Error closing database connections:', error);
-    throw error;
+    // Don't throw the error, just log it
   }
 }
 
