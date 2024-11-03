@@ -1,52 +1,53 @@
-import React, { useEffect, useState } from "react";
-import { io, Socket } from "socket.io-client";
-import { Card, CardContent, CardHeader, Typography, Button, Box } from "@mui/material";
+'use client'
+
+import React, { useEffect, useState } from "react"
+import { io, Socket } from "socket.io-client"
+import { Card, CardContent, CardHeader, Typography, Button, Box } from "@mui/material"
 
 const SocketSetup: React.FC = () => {
-  const [socket, setSocket] = useState<Socket | null>(null);
-  const [logs, setLogs] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null)
+  const [logs, setLogs] = useState<string[]>([])
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const socketInstance = io("http://localhost:3000", {
-      path: "/api/socketio",
-    });
+    const socketInstance = io(process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001", {
+      path: "/socket.io",
+    })
 
     socketInstance.on("connect", () => {
-      console.log("Connected to Socket.io server");
-      setLogs(prev => [...prev, "Connected to server"]);
-    });
+      console.log("Connected to Socket.io server")
+      setLogs(prev => [...prev, "Connected to server"])
+    })
 
     socketInstance.on("docker:logs", (message: string) => {
-      
-      setLogs(prev => [...prev, `Docker: ${message}`]);
-    });
+      setLogs(prev => [...prev, `Docker: ${message}`])
+    })
 
     socketInstance.on("ssh:output", (message: string) => {
-      setLogs(prev => [...prev, `SSH: ${message}`]);
-    });
+      setLogs(prev => [...prev, `SSH: ${message}`])
+    })
 
     socketInstance.on("disconnect", () => {
-      setLogs(prev => [...prev, "Disconnected from server"]);
-    });
+      setLogs(prev => [...prev, "Disconnected from server"])
+    })
 
     socketInstance.on("connect_error", (err: Error) => {
-      console.error("Connection error:", err);
-      setError("Failed to connect to the server. Please try again.");
-    });
+      console.error("Connection error:", err)
+      setError("Failed to connect to the server. Please try again.")
+    })
 
-    setSocket(socketInstance);
+    setSocket(socketInstance)
 
     return () => {
-      socketInstance.disconnect();
-    };
-  }, []);
+      socketInstance.disconnect()
+    }
+  }, [])
 
   const reconnect = () => {
     if (socket) {
-      socket.connect();
+      socket.connect()
     }
-  };
+  }
 
   return (
     <Card>
@@ -69,7 +70,7 @@ const SocketSetup: React.FC = () => {
         )}
       </CardContent>
     </Card>
-  );
-};
+  )
+}
 
-export default SocketSetup;
+export default SocketSetup

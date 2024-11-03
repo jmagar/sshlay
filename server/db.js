@@ -1,24 +1,29 @@
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
+const { MongoClient } = require('mongodb');
+const redis = require('./redis');
 
-// Load environment variables
-dotenv.config({ path: '../.env' });
+let client;
+let db;
 
-const connectDB = async () => {
+async function connectToDatabase() {
+  if (db) return db;
+
+  client = await MongoClient.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+
+  db = client.db();
+
+  // Test Redis connection
   try {
-    if (!process.env.MONGODB_URI) {
-      throw new Error('MONGODB_URI is not defined in environment variables');
-    }
-
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('MongoDB connected');
+    await redis.ping();
+    console.log('Connected to Redis');
   } catch (error) {
-    console.error('MongoDB connection error:', error);
-    process.exit(1);
+    console.error('Failed to connect to Redis:', error);
   }
-};
 
-export default connectDB;
+  console.log('Connected to MongoDB');
+  return db;
+}
+
+module.exports = { connectToDatabase, getDb: () => db };
