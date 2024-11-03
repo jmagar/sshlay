@@ -12,63 +12,61 @@ import {
   TableRow,
   Paper,
   IconButton,
-  CircularProgress
+  CircularProgress,
+  Box
 } from '@mui/material';
 import {
   PlayArrow as StartIcon,
   Stop as StopIcon,
   Delete as DeleteIcon
 } from '@mui/icons-material';
+import { DockerContainer } from '../types';
 
-interface DockerContainer {
-  id: string;
-  name: string;
-  image: string;
-  status: string;
-  ports: string;
+interface DockerManagementProps {
+  fetchContainers: () => Promise<DockerContainer[]>;
+  performContainerAction: (id: string, action: 'start' | 'stop' | 'remove') => Promise<void>;
 }
 
-export default function DockerManagement() {
+const DockerManagement: React.FC<DockerManagementProps> = ({ fetchContainers, performContainerAction }) => {
   const [containers, setContainers] = useState<DockerContainer[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchContainers();
+    loadContainers();
   }, []);
 
-  const fetchContainers = async () => {
+  const loadContainers = async () => {
     setIsLoading(true);
+    setError(null);
     try {
-      const response = await fetch('/api/docker/containers');
-      if (!response.ok) throw new Error('Failed to fetch containers');
-      const data = await response.json();
+      const data = await fetchContainers();
       setContainers(data);
     } catch (err) {
-      setError('Failed to fetch containers');
+      setError('Failed to fetch containers. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleContainerAction = async (id: string, action: 'start' | 'stop' | 'remove') => {
-    // Implementation for container actions
+    try {
+      await performContainerAction(id, action);
+      await loadContainers(); // Refresh the container list
+    } catch (err) {
+      setError(`Failed to ${action} container. Please try again.`);
+    }
   };
 
   if (isLoading) {
     return <CircularProgress />;
   }
 
-  if (error) {
-    return <Typography color="error">{error}</Typography>;
-  }
-
   return (
     <Card>
       <CardContent>
-        <Typography variant="h5" component="div" gutterBottom>
-          Docker Containers
-        </Typography>
+        <Typography variant="h5" gutterBottom>Docker Containers</Typography>
+        {error && <Typography color="error">{error}</Typography>}
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -88,16 +86,10 @@ export default function DockerManagement() {
                   <TableCell>{container.status}</TableCell>
                   <TableCell>{container.ports}</TableCell>
                   <TableCell>
-                    <IconButton
-                      onClick={() => handleContainerAction(container.id, 'start')}
-                      disabled={container.status === 'running'}
-                    >
+                    <IconButton onClick={() => handleContainerAction(container.id, 'start')} disabled={container.status === 'running'}>
                       <StartIcon />
                     </IconButton>
-                    <IconButton
-                      onClick={() => handleContainerAction(container.id, 'stop')}
-                      disabled={container.status !== 'running'}
-                    >
+                    <IconButton onClick={() => handleContainerAction(container.id, 'stop')} disabled={container.status !== 'running'}>
                       <StopIcon />
                     </IconButton>
                     <IconButton onClick={() => handleContainerAction(container.id, 'remove')}>
@@ -109,7 +101,14 @@ export default function DockerManagement() {
             </TableBody>
           </Table>
         </TableContainer>
+        <Box mt={2}>
+          <Button onClick={loadContainers} variant="contained" color="primary">
+            Refresh Containers
+          </Button>
+        </Box>
       </CardContent>
     </Card>
   );
-}
+};
+
+export default DockerManagement;
