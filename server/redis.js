@@ -1,5 +1,5 @@
-const Redis = require('ioredis');
+import Redis from 'ioredis';
 
-const redis = new Redis(process.env.REDIS_URL);
+const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 
-module.exports = redis;
+export default redis;

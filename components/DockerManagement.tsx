@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -20,7 +22,7 @@ import {
   Stop as StopIcon,
   Delete as DeleteIcon
 } from '@mui/icons-material';
-import { DockerContainer } from '../types';
+import type { DockerContainer } from '@/types';
 
 interface DockerManagementProps {
   fetchContainers: () => Promise<DockerContainer[]>;
@@ -80,19 +82,19 @@ const DockerManagement: React.FC<DockerManagementProps> = ({ fetchContainers, pe
             </TableHead>
             <TableBody>
               {containers.map((container) => (
-                <TableRow key={container.id}>
-                  <TableCell>{container.name}</TableCell>
-                  <TableCell>{container.image}</TableCell>
-                  <TableCell>{container.status}</TableCell>
-                  <TableCell>{container.ports}</TableCell>
+                <TableRow key={container.ID}>
+                  <TableCell>{container.Names}</TableCell>
+                  <TableCell>{container.Image}</TableCell>
+                  <TableCell>{container.Status}</TableCell>
+                  <TableCell>{container.Ports}</TableCell>
                   <TableCell>
-                    <IconButton onClick={() => handleContainerAction(container.id, 'start')} disabled={container.status === 'running'}>
+                    <IconButton onClick={() => handleContainerAction(container.ID, 'start')} disabled={container.State === 'running'}>
                       <StartIcon />
                     </IconButton>
-                    <IconButton onClick={() => handleContainerAction(container.id, 'stop')} disabled={container.status !== 'running'}>
+                    <IconButton onClick={() => handleContainerAction(container.ID, 'stop')} disabled={container.State !== 'running'}>
                       <StopIcon />
                     </IconButton>
-                    <IconButton onClick={() => handleContainerAction(container.id, 'remove')}>
+                    <IconButton onClick={() => handleContainerAction(container.ID, 'remove')}>
                       <DeleteIcon />
                     </IconButton>
                   </TableCell>

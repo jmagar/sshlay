@@ -1,5 +1,5 @@
-const { MongoClient } = require('mongodb');
-const redis = require('./redis');
+import { MongoClient } from 'mongodb';
+import redis from './redis.js';
 
 let client;
 let db;
@@ -7,7 +7,9 @@ let db;
 async function connectToDatabase() {
   if (db) return db;
 
-  client = await MongoClient.connect(process.env.MONGODB_URI, {
+  const uri = process.env.MONGODB_URI || 'mongodb://sshlay:sshlay_password@localhost:27017';
+
+  client = await MongoClient.connect(uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   });
@@ -26,4 +28,6 @@ async function connectToDatabase() {
   return db;
 }
 
-module.exports = { connectToDatabase, getDb: () => db };
+const getDb = () => db;
+
+export { connectToDatabase, getDb };

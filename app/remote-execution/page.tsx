@@ -1,9 +1,10 @@
-import RemoteCodeExecution from '@/components/remote-code-execution'
+'use client'
+
+import RemoteCodeExecution from '@/components/RemoteCodeExecution'
 
 export default function RemoteExecutionPage() {
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Remote Execution</h1>
       <RemoteCodeExecution />
     </div>
   )

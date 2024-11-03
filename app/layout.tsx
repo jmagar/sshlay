@@ -1,20 +1,25 @@
-'use client'
+import * as React from 'react'
+import './globals.css'
+import { Providers } from './providers'
 
-import * as React from 'react';
-import { ThemeProvider } from '@/contexts/ThemeContext';
+export const metadata = {
+  title: 'SSHlay',
+  description: 'SSH and Docker Management Interface',
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head />
       <body>
-        <ThemeProvider>
+        <Providers>
           {children}
-        </ThemeProvider>
+        </Providers>
       </body>
     </html>
-  );
+  )
 }

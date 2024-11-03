@@ -1,21 +1,14 @@
-const express = require('express');
-const cors = require('cors');
-const { createServer } = require('http');
-const { Server } = require('socket.io');
-const { connectToDatabase } = require('./db');
-const redis = require('./redis');
-const routes = require('./routes');
+import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import { connectToDatabase } from './db.js';
+import redis from './redis.js';
+import routes from './routes/index.js';
 
 const app = express();
 const httpServer = createServer(app);
-const io = new Server(httpServer, {
-  cors: {
-    origin: process.env.FRONTEND_URL,
-    methods: ['GET', 'POST']
-  }
-});
+const io = new Server(httpServer);
 
-app.use(cors());
 app.use(express.json());
 
 // Connect to MongoDB
