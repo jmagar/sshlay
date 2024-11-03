@@ -8,7 +8,7 @@ const nextConfig = {
   webpack: (config) => {
     config.module.rules.push({
       test: /\.css$/,
-      use: ['style-loader', 'css-loader']
+      use: ['style-loader', 'css-loader', 'postcss-loader']
     });
     return config;
   },
@@ -54,11 +54,4 @@ const nextConfig = {
   pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
   // Configure asset prefix for CDN
   assetPrefix: process.env.ASSET_PREFIX,
-  // PostCSS configuration
-  postcss: {
-    plugins: {
-      'tailwindcss': {},
-      'autoprefixer': {},
-    },
-  },
 }
