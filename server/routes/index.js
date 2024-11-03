@@ -12,44 +12,29 @@ import path from 'path';
 const execAsync = promisify(exec);
 const router = express.Router();
 
-// Rate limiting middleware
-const rateLimit = async (req, res, next) => {
-  const key = `ratelimit:${req.ip}`;
-  const limit = 100; // requests
-  const window = 60; // seconds
-
-  try {
-    const current = await redis.incr(key);
-    if (current === 1) {
-      await redis.expire(key, window);
-    }
-    if (current > limit) {
-      return res.status(429).json({ error: 'Too many requests' });
-    }
-    next();
-  } catch (error) {
-    console.error('Rate limiting error:', error);
-    next();
-  }
-};
-
-router.use(rateLimit);
-
 // Docker Routes
 router.get('/docker-containers', async (req, res) => {
   try {
+    console.log('Fetching Docker containers...');
+    console.log('Checking Redis cache...');
+
     const cachedContainers = await redis.get('containers');
     if (cachedContainers) {
+      console.log('Cache hit! Returning cached containers');
       return res.json(JSON.parse(cachedContainers));
     }
 
+    console.log('Cache miss. Fetching from Docker...');
     const { stdout } = await execAsync('docker ps --format "{{json .}}"');
     const containers = stdout.trim().split('\n').map(line => JSON.parse(line));
 
+    console.log('Caching containers in Redis...');
     await redis.set('containers', JSON.stringify(containers), 'EX', 60); // Cache for 1 minute
+    console.log('Containers cached successfully');
+
     res.json(containers);
   } catch (error) {
-    console.error('Error fetching containers:', error);
+    console.error('Error in /docker-containers:', error);
     res.status(500).json({ error: 'Failed to fetch containers' });
   }
 });
