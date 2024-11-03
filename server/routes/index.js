@@ -3,7 +3,7 @@ import { executeCode } from '../lib/codeExecution.js';
 import { getDevices, addDevice } from '../lib/devices.js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { addSSHConnection, getSSHConnections, getSSHConnection, deleteSSHConnection } from '../lib/ssh.js';
+import { addSSHConnection, getSSHConnections, getSSHConnection, deleteSSHConnection, testSSHConnection, importSSHConfig, importSSHConfigFile } from '../lib/ssh.js';
 import redis from '../redis.js';
 import { connectToDatabase } from '../db.js';
 import fs from 'fs/promises';
@@ -109,6 +109,49 @@ router.delete('/ssh-connections/:id', async (req, res) => {
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete SSH connection' });
+  }
+});
+
+// New SSH routes for config import and testing
+router.post('/ssh-connections/test', async (req, res) => {
+  try {
+    const result = await testSSHConnection(req.body);
+    res.json(result);
+  } catch (error) {
+    console.error('SSH connection test failed:', error);
+    res.status(400).json(error);
+  }
+});
+
+router.post('/ssh-connections/import', async (req, res) => {
+  try {
+    const configContent = req.body.config;
+    if (!configContent) {
+      return res.status(400).json({ error: 'No config content provided' });
+    }
+
+    const result = await importSSHConfig(configContent);
+    await redis.del('ssh:connections'); // Invalidate cache after import
+    res.json(result);
+  } catch (error) {
+    console.error('Failed to import SSH config:', error);
+    res.status(500).json({ error: 'Failed to import SSH config' });
+  }
+});
+
+router.post('/ssh-connections/import/file', async (req, res) => {
+  try {
+    const { path: configPath } = req.body;
+    if (!configPath) {
+      return res.status(400).json({ error: 'No file path provided' });
+    }
+
+    const result = await importSSHConfigFile(configPath);
+    await redis.del('ssh:connections'); // Invalidate cache after import
+    res.json(result);
+  } catch (error) {
+    console.error('Failed to import SSH config file:', error);
+    res.status(500).json({ error: 'Failed to import SSH config file' });
   }
 });
 

@@ -4,30 +4,72 @@ import redis from './redis.js';
 let client;
 let db;
 
+/**
+ * Connects to MongoDB and Redis databases
+ * Handles connection pooling and authentication
+ * @returns {Promise<Db>} MongoDB database instance
+ */
 async function connectToDatabase() {
   if (db) return db;
 
-  const uri = process.env.MONGODB_URI || 'mongodb://sshlay:sshlay_password@localhost:27017';
-
-  client = await MongoClient.connect(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
-
-  db = client.db();
-
-  // Test Redis connection
   try {
-    await redis.ping();
-    console.log('Connected to Redis');
-  } catch (error) {
-    console.error('Failed to connect to Redis:', error);
-  }
+    // MongoDB connection with auth and database name
+    const uri = process.env.MONGODB_URI || 'mongodb://sshlay:sshlay_password@localhost:27017/sshlay?authSource=admin';
 
-  console.log('Connected to MongoDB');
-  return db;
+    client = await MongoClient.connect(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+
+    db = client.db('sshlay'); // Explicitly specify database name
+
+    console.log('Connected to MongoDB successfully');
+
+    // Test Redis connection
+    try {
+      await redis.ping();
+      console.log('Connected to Redis successfully');
+    } catch (error) {
+      console.error('Failed to connect to Redis:', error);
+      throw error; // Re-throw to be caught by outer try-catch
+    }
+
+    return db;
+  } catch (error) {
+    console.error('Database connection error:', error);
+    throw error;
+  }
 }
 
-const getDb = () => db;
+/**
+ * Gets the current database instance
+ * @returns {Db|undefined} MongoDB database instance if connected
+ */
+const getDb = () => {
+  if (!db) {
+    throw new Error('Database not initialized. Call connectToDatabase() first.');
+  }
+  return db;
+};
 
-export { connectToDatabase, getDb };
+/**
+ * Closes all database connections
+ * Should be called when shutting down the application
+ */
+async function closeDatabase() {
+  try {
+    if (client) {
+      await client.close();
+      console.log('MongoDB connection closed');
+    }
+    if (redis) {
+      await redis.quit();
+      console.log('Redis connection closed');
+    }
+  } catch (error) {
+    console.error('Error closing database connections:', error);
+    throw error;
+  }
+}
+
+export { connectToDatabase, getDb, closeDatabase };

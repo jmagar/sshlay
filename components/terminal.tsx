@@ -2,13 +2,13 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, Typography, Select, MenuItem, FormControl, InputLabel, Alert } from '@mui/material';
-import { Terminal as XTerm } from '@xterm/xterm';
-import { FitAddon } from '@xterm/addon-fit';
-import { WebLinksAddon } from '@xterm/addon-web-links';
-import { SearchAddon } from '@xterm/addon-search';
-import io from 'socket.io-client';
-import '@xterm/xterm/css/xterm.css';
-import type { SSHConnection } from '@/types';
+import type { SSHConnection } from '../types';
+
+// Import types only
+import type { Terminal as XTerm } from '@xterm/xterm';
+import type { FitAddon } from '@xterm/addon-fit';
+import type { WebLinksAddon } from '@xterm/addon-web-links';
+import type { SearchAddon } from '@xterm/addon-search';
 
 interface TerminalProps {
   connectionId?: string;
@@ -22,6 +22,7 @@ export default function Terminal({ connectionId }: TerminalProps) {
   const [connections, setConnections] = useState<SSHConnection[]>([]);
   const [selectedConnection, setSelectedConnection] = useState<string>(connectionId || '');
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchConnections();
@@ -49,15 +50,33 @@ export default function Terminal({ connectionId }: TerminalProps) {
       setConnections(data);
     } catch (err) {
       setError('Failed to fetch SSH connections');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const initializeTerminal = async () => {
-    if (!terminalRef.current || !selectedConnection) return;
+    if (!terminalRef.current || !selectedConnection || typeof window === 'undefined') return;
 
     try {
+      // Dynamically import xterm and addons
+      const [
+        { Terminal },
+        { FitAddon },
+        { WebLinksAddon },
+        { SearchAddon }
+      ] = await Promise.all([
+        import('@xterm/xterm'),
+        import('@xterm/addon-fit'),
+        import('@xterm/addon-web-links'),
+        import('@xterm/addon-search')
+      ]);
+
+      // Import xterm CSS
+      await import('@xterm/xterm/css/xterm.css');
+
       // Initialize terminal
-      const term = new XTerm({
+      const term = new Terminal({
         cursorBlink: true,
         fontSize: 14,
         fontFamily: 'Menlo, Monaco, "Courier New", monospace',
@@ -83,6 +102,7 @@ export default function Terminal({ connectionId }: TerminalProps) {
       fitAddon.fit();
 
       // Initialize WebSocket connection
+      const { io } = await import('socket.io-client');
       const socket = io('http://localhost:3001', {
         query: { connectionId: selectedConnection }
       });
@@ -90,23 +110,23 @@ export default function Terminal({ connectionId }: TerminalProps) {
       socketRef.current = socket;
 
       // Handle terminal input
-      term.onData(data => {
+      term.onData((data: string) => {
         socket.emit('terminal:input', data);
       });
 
       // Handle terminal resize
-      term.onResize(size => {
+      term.onResize((size: { cols: number; rows: number }) => {
         socket.emit('terminal:resize', size);
       });
 
       // Handle terminal output
-      socket.on('terminal:output', data => {
+      socket.on('terminal:output', (data: string) => {
         term.write(data);
       });
 
       // Handle errors
-      socket.on('error', (err) => {
-        setError(`Terminal error: ${err}`);
+      socket.on('error', (err: Error) => {
+        setError(`Terminal error: ${err.message}`);
       });
 
       // Handle connection status
@@ -135,6 +155,18 @@ export default function Terminal({ connectionId }: TerminalProps) {
     }
   };
 
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent>
+          <div className="flex justify-center items-center h-[400px]">
+            <Typography>Loading terminal...</Typography>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardContent>
@@ -146,7 +178,7 @@ export default function Terminal({ connectionId }: TerminalProps) {
             <InputLabel>SSH Connection</InputLabel>
             <Select
               value={selectedConnection}
-              onChange={(e) => setSelectedConnection(e.target.value)}
+              onChange={(e) => setSelectedConnection(e.target.value as string)}
               label="SSH Connection"
             >
               <MenuItem value="">

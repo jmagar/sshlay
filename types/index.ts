@@ -90,10 +90,31 @@ export interface SSHConnection {
   hostname: string;
   port: number;
   username: string;
-  password?: string; // Only used during connection, never stored
+  password?: string;
   privateKey?: string;
+  identityFile?: string;
   status?: 'connected' | 'disconnected' | 'error';
+  createdAt?: Date;
   lastConnected?: Date;
+  importedFrom?: 'ssh_config' | 'manual' | 'import';
+  forwardAgent?: boolean;
+  proxyCommand?: string;
+  sshOptions?: {
+    compression?: string;
+    connectTimeout?: string;
+    strictHostKeyChecking?: string;
+    userKnownHostsFile?: string;
+  };
+  lastTest?: {
+    success: boolean;
+    timestamp: Date;
+    error?: string;
+    details?: {
+      client?: string;
+      serverVersion?: string;
+      [key: string]: any;
+    };
+  };
 }
 
 export interface TerminalSession {
@@ -118,4 +139,16 @@ export interface APIResponse<T = unknown> {
   data?: T;
   error?: string;
   message?: string;
+}
+
+export interface ImportResult {
+  success: boolean;
+  imported?: Array<{
+    success: boolean;
+    name: string;
+    _id?: string;
+    error?: string;
+    testResult?: SSHConnection['lastTest'];
+  }>;
+  error?: string;
 }

@@ -1,0 +1,19 @@
+Host github
+    HostName github.com
+    User git
+    Port 22
+    IdentityFile ~/.ssh/github_key
+
+Host dev-server
+    HostName dev.example.com
+    User developer
+    Port 2222
+    IdentityFile ~/.ssh/dev_key
+
+Host prod-server
+    HostName prod.example.com
+    User admin
+    Port 22
+    IdentityFile ~/.ssh/prod_key
+    ForwardAgent yes
+    StrictHostKeyChecking no
