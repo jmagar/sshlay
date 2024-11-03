@@ -80,61 +80,54 @@ httpServer.listen(port, () => {
 let isShuttingDown = false;
 
 async function shutdown(signal) {
-  if (isShuttingDown) {
-    console.log('Shutdown already in progress...');
-    return;
-  }
-
+  // Prevent multiple shutdown attempts
+  if (isShuttingDown) return;
   isShuttingDown = true;
-  console.log(`\n${signal} received. Starting graceful shutdown...`);
 
+  // Use a single try-catch block for all cleanup
   try {
-    // Close HTTP server first to stop accepting new connections
-    await new Promise((resolve, reject) => {
-      httpServer.close((err) => {
-        if (err) {
-          console.error('Error closing HTTP server:', err);
-          reject(err);
-        } else {
-          console.log('HTTP server closed');
-          resolve();
-        }
-      });
-    });
+    // Close HTTP server first
+    if (httpServer) {
+      await new Promise(resolve => httpServer.close(resolve));
+    }
 
-    // Close Socket.IO connections
-    await io.close();
-    console.log('Socket.IO server closed');
+    // Close Socket.IO
+    if (io) {
+      await io.close();
+    }
 
-    // Close Redis subscription connection
-    if (redisSub) {
-      await redisSub.quit().catch(err => {
-        console.error('Error closing Redis subscription:', err);
-      });
+    // Close Redis subscription
+    if (redisSub && redisSub.status === 'ready') {
+      await redisSub.quit();
     }
 
     // Close database connections
     await closeDatabase();
 
-    console.log('Graceful shutdown completed');
-    process.exit(0);
   } catch (error) {
-    console.error('Error during shutdown:', error);
     process.exit(1);
   }
+
+  // Exit cleanly
+  process.exit(0);
 }
 
 // Register shutdown handlers
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
+const shutdownHandler = signal => {
+  if (!isShuttingDown) {
+    shutdown(signal).catch(() => process.exit(1));
+  }
+};
 
-// Handle uncaught errors
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught exception:', error);
-  shutdown('UNCAUGHT_EXCEPTION');
+process.on('SIGTERM', () => shutdownHandler('SIGTERM'));
+process.on('SIGINT', () => shutdownHandler('SIGINT'));
+process.on('uncaughtException', error => {
+  if (!isShuttingDown && error.code !== 'EPIPE') {
+    shutdownHandler('UNCAUGHT_EXCEPTION');
+  }
 });
-
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled rejection at:', promise, 'reason:', reason);
-  shutdown('UNHANDLED_REJECTION');
+  if (!isShuttingDown) {
+    shutdownHandler('UNHANDLED_REJECTION');
+  }
 });
